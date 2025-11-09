@@ -2,8 +2,9 @@
   "subscription_id": "YOUR-SUBSCRIPTION-ID-HERE",
   "resource_group": "YOUR-RESOURCE-GROUP-NAME",
   "workspace_name": "YOUR-SENTINEL-WORKSPACE-NAME",
-  "location": "eastus",
+  "location": "usgovvirginia",
   "crowdstrike_api_base": "https://api.crowdstrike.com",
   "crowdstrike_client_id": "YOUR-CROWDSTRIKE-CLIENT-ID",
   "crowdstrike_client_secret": "YOUR-CROWDSTRIKE-CLIENT-SECRET"
 }
+
