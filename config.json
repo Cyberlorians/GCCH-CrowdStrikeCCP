@@ -1,0 +1,10 @@
+{
+  "_comment": "Customer configuration - fill in your values below",
+  "subscription_id": "9661e5a9-7fad-453d-a85a-d73f805b396d",
+  "resource_group": "es-dns",
+  "workspace_name": "cstest",
+  "location": "usgovvirginia",
+  "crowdstrike_api_base": "https://crowdstrike-mock.agreeableflower-56ca7d49.usgovvirginia.azurecontainerapps.us",
+  "crowdstrike_client_id": "dev-mock-client-9a3b2f",
+  "crowdstrike_client_secret": "s3cr3t-mock-R8yT!q2#"
+}

@@ -1,0 +1,61 @@
+{
+  "kind": "RestApiPoller",
+  "properties": {
+    "connectorDefinitionName": "CrowdStrikeAPICCPDefinition",
+    "dataType": "CrowdStrikeIncidents",
+    "dcrConfig": {
+      "streamName": "SENTINEL_CROWDSTRIKEINCIDENTS",
+      "dataCollectionEndpoint": "https://dcr-crowdstrike-v2-endpoint-v2-05cq.usgovvirginia-1.ingest.monitor.azure.us",
+      "dataCollectionRuleImmutableId": "dcr-6124f001a28d47029c0bbf89aebd6077"
+    },
+    "auth": {
+      "type": "OAuth2",
+      "ClientId": "dev-mock-client-9a3b2f",
+      "ClientSecret": "s3cr3t-mock-R8yT!q2#",
+      "grantType": "client_credentials",
+      "tokenEndpoint": "https://crowdstrike-mock.agreeableflower-56ca7d49.usgovvirginia.azurecontainerapps.us/oauth2/token",
+      "tokenEndpointHeaders": {
+        "Accept": "application/json",
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "tokenEndpointQueryParameters": {},
+      "authorizationEndpointHeaders": {},
+      "authorizationEndpointQueryParameters": {},
+      "isCredentialsInHeaders": false,
+      "isJwtBearerFlow": false
+    },
+    "request": {
+      "apiEndpoint": "https://crowdstrike-mock.agreeableflower-56ca7d49.usgovvirginia.azurecontainerapps.us/incidents/queries/incidents/v1",
+      "httpMethod": "GET",
+      "headers": {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": "Scuba"
+      },
+      "queryParameters": {
+        "filter": "start:>'{_QueryWindowStartTime}'+start:<='{_QueryWindowEndTime}'",
+        "sort": "start.asc"
+      },
+      "queryTimeFormat": "yyyy-MM-ddTHH:mm:ssZ",
+      "queryWindowInMin": 5,
+      "rateLimitQPS": 10,
+      "retryCount": 3,
+      "timeoutInSeconds": 68
+    },
+    "response": {
+      "eventsJsonPaths": ["$.resources"],
+      "format": "json"
+    },
+    "paging": {
+      "pagingType": "NextPageToken",
+      "nextPageParaName": "after",
+      "nextPageTokenJsonPath": "$.meta.pagination.after",
+      "pageSize": 100,
+      "pageSizeParameterName": "limit",
+      "sendNextPageTokenAsObject": false
+    },
+    "isActive": true,
+    "shouldJoinNestedData": false,
+    "stepCollectorConfigs": {}
+  }
+}
