@@ -1,0 +1,63 @@
+{
+  "kind": "RestApiPoller",
+  "properties": {
+    "connectorDefinitionName": "CrowdStrikeAPICCPDefinition",
+    "dataType": "CrowdStrikeVulnerabilities",
+    "dcrConfig": {
+      "streamName": "SENTINEL_CROWDSTRIKEVULNERABILITIES",
+      "dataCollectionRuleImmutableId": "WILL_BE_POPULATED_AT_DEPLOYMENT",
+      "dataCollectionEndpoint": "WILL_BE_POPULATED_AT_DEPLOYMENT"
+    },
+    "auth": {
+      "type": "OAuth2",
+      "ClientId": "WILL_BE_POPULATED_AT_DEPLOYMENT",
+      "ClientSecret": "WILL_BE_POPULATED_AT_DEPLOYMENT",
+      "grantType": "client_credentials",
+      "tokenEndpoint": "WILL_BE_POPULATED_AT_DEPLOYMENT",
+      "tokenEndpointHeaders": {
+        "Accept": "application/json",
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "tokenEndpointQueryParameters": {},
+      "authorizationEndpointHeaders": {},
+      "authorizationEndpointQueryParameters": {},
+      "isCredentialsInHeaders": false,
+      "isJwtBearerFlow": false
+    },
+    "request": {
+      "apiEndpoint": "WILL_BE_POPULATED_AT_DEPLOYMENT",
+      "httpMethod": "GET",
+      "headers": {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "User-Agent": "Scuba"
+      },
+      "queryParameters": {
+        "filter": "updated_timestamp:>'{_QueryWindowStartTime}'+updated_timestamp:<='{_QueryWindowEndTime}'",
+        "sort": "updated_timestamp.asc"
+      },
+      "queryTimeFormat": "yyyy-MM-ddTHH:mm:ssZ",
+      "queryWindowInMin": 5,
+      "rateLimitQPS": 10,
+      "retryCount": 3,
+      "timeoutInSeconds": 68
+    },
+    "response": {
+      "eventsJsonPaths": [
+        "$.resources"
+      ],
+      "format": "json"
+    },
+    "paging": {
+      "pagingType": "NextPageToken",
+      "nextPageParaName": "after",
+      "nextPageTokenJsonPath": "$.meta.pagination.after",
+      "pageSize": 100,
+      "pageSizeParameterName": "limit",
+      "sendNextPageTokenAsObject": false
+    },
+    "isActive": true,
+    "shouldJoinNestedData": false,
+    "stepCollectorConfigs": {}
+  }
+}

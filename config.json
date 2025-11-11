@@ -1,0 +1,17 @@
+{
+  "_comment": "Customer configuration - fill in your values below",
+  "subscription_id": "",
+  "resource_group": "",
+  "workspace_name": "",
+  "location": "",
+  "dcr_name": "",
+  "_dcr_name_comment": "Optional: Custom DCR name (leave empty for auto-generated unique name)",
+  "crowdstrike_api_base": "https://api.laggar.gcw.crowdstrike.com",
+  "crowdstrike_client_id": "",
+  "crowdstrike_client_secret": "",
+  "api_vulnerabilities_path": "/spotlight/combined/vulnerabilities/v1",
+  "api_alerts_path": "/alerts/entities/alerts/v1",
+  "api_incidents_path": "/incidents/queries/incidents/v1",
+  "api_detections_path": "/detects/entities/summaries/GET/v1",
+  "api_hosts_path": "/devices/entities/devices/v1"
+}
