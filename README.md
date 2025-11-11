@@ -1,9 +1,62 @@
 # CrowdStrike Sentinel Connector - Setup Guide
 
-This package connects CrowdStrike data to your Microsoft Sentinel workspace. Follow these 3 simple steps to get it working.
+This package connects CrowdStrike data to your Microsoft Sentinel workspace using **Direct DCR ingestion (no DCE required)**. Follow these 3 simple steps to get it working.
 
 ---
 
+
+---
+
+## Prerequisites
+
+Before you begin, **run the prerequisites check script**:
+
+```powershell
+.\prereq-check.ps1
+```
+
+This automated script verifies:
+- ✅ Azure CLI is installed
+- ✅ You're logged into Azure (Government or Commercial)
+- ✅ PowerShell version 5.1+
+- ✅ `config.json` is filled in correctly
+- ✅ Subscription and resource group access
+
+### Manual Prerequisites (if not automated)
+
+If you need to set things up manually:
+
+**1. Install Azure CLI**
+```powershell
+# Download from: https://aka.ms/installazurecliwindows
+az --version  # Verify installation
+```
+
+**2. Connect to Azure Government (GCC-High)**
+```powershell
+az cloud set --name AzureUSGovernment
+az login
+az cloud show --query name  # Should return: "AzureUSGovernment"
+```
+
+**For Commercial Azure:**
+```powershell
+az cloud set --name AzureCloud
+az login
+```
+
+**3. Get CrowdStrike API Credentials**
+
+From CrowdStrike Falcon Console → Support → API Clients & Keys
+
+Required permissions:
+- Spotlight Vulnerabilities: **Read**
+- Alerts: **Read**
+- Incidents: **Read**
+- Detections: **Read**
+- Hosts/Devices: **Read**
+
+---
 ## Step 1: Fill in Your Information
 
 Open the `config.json` file and replace the placeholder values with your real information:
@@ -14,16 +67,15 @@ Open the `config.json` file and replace the placeholder values with your real in
   "resource_group": "YOUR_RESOURCE_GROUP_NAME",
   "workspace_name": "YOUR_SENTINEL_WORKSPACE_NAME",
   "location": "YOUR_AZURE_REGION",
-  "dce_name": "",
   "dcr_name": "",
-  "crowdstrike_api_base": "https://api.crowdstrike.com",
+  "crowdstrike_api_base": "https://api.laggar.gcw.crowdstrike.com",
   "crowdstrike_client_id": "YOUR_CROWDSTRIKE_CLIENT_ID",
   "crowdstrike_client_secret": "YOUR_CROWDSTRIKE_CLIENT_SECRET",
   "api_vulnerabilities_path": "/spotlight/combined/vulnerabilities/v1",
-  "api_alerts_path": "/alerts/combined/alerts/v1",
+  "api_alerts_path": "/alerts/entities/alerts/v1",
   "api_incidents_path": "/incidents/queries/incidents/v1",
-  "api_detections_path": "/detections/queries/detections/v1",
-  "api_hosts_path": "/devices/queries/devices-scroll/v1"
+  "api_detections_path": "/detects/entities/summaries/GET/v1",
+  "api_hosts_path": "/devices/entities/devices/v1"
 }
 ```
 
@@ -34,323 +86,183 @@ Open the `config.json` file and replace the placeholder values with your real in
 | **subscription_id** | Your Azure subscription ID | `12345678-1234-1234-1234-123456789abc` |
 | **resource_group** | Resource group with your Sentinel workspace | `my-sentinel-rg` |
 | **workspace_name** | Your Sentinel workspace name | `my-sentinel-workspace` |
-| **location** | Azure region | `eastus`, `westus`, `usgovvirginia` |
-| **dce_name** | (Optional) Custom DCE name - leave empty for auto-generated unique name | `my-custom-dce` or `""` |
+| **location** | Azure region | `usgovvirginia` (GCC-High) |
 | **dcr_name** | (Optional) Custom DCR name - leave empty for auto-generated unique name | `my-custom-dcr` or `""` |
-| **crowdstrike_api_base** | Your CrowdStrike API URL | `https://api.crowdstrike.com` (Commercial)<br>`https://api.us-2.crowdstrike.com` (GovCloud) |
+| **crowdstrike_api_base** | Your CrowdStrike API URL | `https://api.laggar.gcw.crowdstrike.com` (GCC-High)<br>`https://api.crowdstrike.com` (Commercial) |
 | **crowdstrike_client_id** | Your CrowdStrike API client ID | `abc123def456...` |
 | **crowdstrike_client_secret** | Your CrowdStrike API secret key | `xyz789uvw012...` |
 
-**API Path Fields** (already set to correct values):
-- **api_vulnerabilities_path** - CrowdStrike Vulnerabilities API endpoint
-- **api_alerts_path** - CrowdStrike Alerts API endpoint
-- **api_incidents_path** - CrowdStrike Incidents API endpoint  
-- **api_detections_path** - CrowdStrike Detections API endpoint
-- **api_hosts_path** - CrowdStrike Hosts/Devices API endpoint
+**API Path Fields** (pre-configured with correct CrowdStrike endpoints):
+- **api_vulnerabilities_path** - `/spotlight/combined/vulnerabilities/v1`
+- **api_alerts_path** - `/alerts/entities/alerts/v1`
+- **api_incidents_path** - `/incidents/queries/incidents/v1`
+- **api_detections_path** - `/detects/entities/summaries/GET/v1`
+- **api_hosts_path** - `/devices/entities/devices/v1`
 
-> **Note:** The API path fields are pre-configured with the correct CrowdStrike API paths. Only change these if CrowdStrike updates their API endpoints.
-
-**Save the file** after filling in your information.
+> **Note:** API paths are pre-configured and should not need modification unless CrowdStrike changes their API.
 
 ---
 
-## Step 2: Deploy!
+## Step 2: Run the Deployment
 
-Now deploy everything with one simple command:
+Open PowerShell in this directory and run:
 
 ```powershell
-cd C:\path\to\your\download
 .\deploy.ps1
 ```
 
-Type **`yes`** when it asks you to confirm.
+This single script will:
+1. **Create the Data Collection Rule (DCR)** with Direct ingestion
+2. **Deploy the connector definition**
+3. **Deploy all 5 data connectors**
 
-**What happens:**
-1. ✓ Validates your configuration
-2. ✓ Creates a Data Collection Endpoint (DCE)
-3. ✓ Creates a Data Collection Rule (DCR)
-4. ✓ Deploys the connector definition
-5. ✓ Deploys 5 data connectors:
-   - CrowdStrike Vulnerabilities
-   - CrowdStrike Alerts
-   - CrowdStrike Incidents
-   - CrowdStrike Detections
-   - CrowdStrike Hosts
-
-The deployment takes about 2-3 minutes. A configuration file (`generated-config.json`) will be created automatically during deployment.
+The deployment takes about 2-3 minutes.
 
 ---
 
-## Step 3: Verify Data is Flowing
+## Step 3: Wait for Data
 
-**Initial startup:** Wait 30-45 minutes after first deployment for data to start appearing. Subsequent polling cycles will be faster (5-10 minutes).
+After deployment:
+- **Initial data:** 30-45 minutes (Sentinel backend scheduling)
+- **Subsequent polls:** Every 5 minutes
 
-Go to your Sentinel workspace and run this query:
-
-```kql
-union CrowdStrike*
-| summarize Count=count() by Type
-| order by Count desc
-```
-
-You should see data in these tables:
+Check for data in Sentinel Log Analytics:
 - `CrowdStrikeVulnerabilities`
 - `CrowdStrikeAlerts`
 - `CrowdStrikeIncidents`
 - `CrowdStrikeDetections`
 - `CrowdStrikeHosts`
 
+**Verify data ingestion:**
+```kql
+union CrowdStrike*
+| where TimeGenerated > ago(10m)
+| summarize Count=count() by Type
+| order by Count desc
+```
+
 ---
 
-## Clean Up (Optional)
+## Architecture
 
-If you need to remove everything and start fresh:
+**Simplified Direct Ingestion (No DCE Required):**
+
+```
+CrowdStrike API → Connectors (5) → DCR Direct Endpoint → Log Analytics Workspace
+```
+
+**What gets deployed:**
+- ✅ **1 Data Collection Rule (DCR)** with Direct kind (generates its own ingestion endpoint)
+- ✅ **1 Connector Definition** (template for all connectors)
+- ✅ **5 Data Connectors** (Vulnerabilities, Alerts, Incidents, Detections, Hosts)
+
+**No Data Collection Endpoint (DCE) required!** The DCR with `kind: "Direct"` automatically generates its own logs ingestion endpoint.
+
+---
+
+## Data Collected
+
+| Connector | CrowdStrike API | Sentinel Table | Polling Interval |
+|-----------|----------------|----------------|------------------|
+| **Vulnerabilities** | Spotlight Vulnerabilities | `CrowdStrikeVulnerabilities` | 5 minutes |
+| **Alerts** | Alerts | `CrowdStrikeAlerts` | 5 minutes |
+| **Incidents** | Incidents | `CrowdStrikeIncidents` | 7 minutes |
+| **Detections** | Detections | `CrowdStrikeDetections` | 6 minutes |
+| **Hosts** | Devices | `CrowdStrikeHosts` | 5 minutes |
+
+---
+
+## Cleanup
+
+To remove all deployed resources:
 
 ```powershell
 .\cleanup.ps1
 ```
 
-Type **`delete`** (or **`DELETE`**) when it asks you to confirm.
-
-This will remove:
+This will delete:
 - All 5 data connectors
-- The connector definition
-- The Data Collection Rule (DCR)
-- The Data Collection Endpoint (DCE)
+- Connector definition
+- Data Collection Rule (DCR)
 
-The cleanup script verifies everything is actually deleted.
-
----
-
-## File Reference
-
-### Configuration Files
-
-| File | Purpose | Do You Edit? |
-|------|---------|--------------|
-| **config.json** | Your Azure and CrowdStrike settings | ✅ YES - Fill this in before deployment |
-| **generated-config.json** | Runtime configuration created during deployment | ❌ NO - Auto-generated (not in repo) |
-| **.gitignore** | Prevents sensitive files from being committed to git | ❌ NO |
-
-### Deployment Scripts
-
-| File | What It Does | When To Run |
-|------|--------------|-------------|
-| **deploy.ps1** | Master deployment script - orchestrates entire deployment process | Run this to deploy everything |
-| **deploy-infrastructure.ps1** | Creates DCE and DCR, generates `generated-config.json` | Called automatically by `deploy.ps1` |
-| **deploy-definition.ps1** | Creates the CrowdStrike connector definition in Sentinel | Called automatically by `deploy.ps1` |
-| **deploy-all.ps1** | Deploys all 5 data connectors (Vulnerabilities, Alerts, Incidents, Detections, Hosts) | Called automatically by `deploy.ps1` |
-| **cleanup.ps1** | Deletes all deployed resources | Run when you want to remove everything |
-
-### Connector Definition Files
-
-These files define the configuration for each data connector. They contain template values that get populated from `config.json` during deployment.
-
-| File | Connector Type | API Method | What It Collects |
-|------|----------------|------------|------------------|
-| **deploy-vulnerabilities.json** | CrowdStrike Vulnerabilities | GET | Software vulnerabilities detected by CrowdStrike |
-| **deploy-alerts.json** | CrowdStrike Alerts | POST | Security alerts from CrowdStrike |
-| **deploy-incidents.json** | CrowdStrike Incidents | GET | Security incidents tracked by CrowdStrike |
-| **deploy-detections.json** | CrowdStrike Detections | POST | Threat detections from CrowdStrike |
-| **deploy-hosts.json** | CrowdStrike Hosts | GET | Endpoint/device inventory from CrowdStrike |
-
-> **Note:** These files contain placeholder values like `WILL_BE_POPULATED_AT_DEPLOYMENT`. During deployment, the scripts replace these with your actual values from `config.json`. After successful deployment, the files are updated with the real values for reference.
-
----
-
-## How It Works
-
-### Deployment Flow
-
-```
-deploy.ps1 (you run this)
-    ↓
-1. Validates config.json
-    ↓
-2. deploy-infrastructure.ps1
-   - Creates DCE (Data Collection Endpoint)
-   - Creates DCR (Data Collection Rule)
-   - Generates generated-config.json with all runtime values
-    ↓
-3. deploy-definition.ps1
-   - Creates connector definition in Sentinel
-    ↓
-4. deploy-all.ps1
-   - Loads each deploy-*.json file
-   - Replaces placeholders with values from config.json & generated-config.json
-   - Deploys connector to Azure
-   - Updates original deploy-*.json file with actual deployed values
-    ↓
-✓ Done! Connectors start polling within 30-45 minutes
-```
-
-### Data Collection Flow
-
-```
-CrowdStrike API
-    ↓ (Connectors poll every 5 minutes)
-Azure Sentinel Data Connectors
-    ↓ (Send data via HTTPS)
-Data Collection Endpoint (DCE)
-    ↓ (Routes to correct destination)
-Data Collection Rule (DCR)
-    ↓ (Transforms and validates data)
-Log Analytics Workspace
-    ↓ (Indexes data into tables)
-Microsoft Sentinel
-    ↓ (Query with KQL)
-Your Security Operations!
-```
+**Note:** Historical data in Sentinel tables will remain.
 
 ---
 
 ## Troubleshooting
 
-### Deployment Failed?
+### No data after 45 minutes
 
-**Check your configuration:**
-```powershell
-# Verify you're logged into Azure
-az account show
+1. **Check connector status:**
+   ```powershell
+   # In Azure Portal: Sentinel → Data Connectors → Search "CrowdStrike"
+   # Should show "Connected" status
+   ```
 
-# Check if you're using the correct subscription
-az account set --subscription "YOUR_SUBSCRIPTION_ID"
+2. **Verify CrowdStrike credentials:**
+   - Test credentials using CrowdStrike API directly
+   - Ensure API client has correct permissions
 
-# Verify your Sentinel workspace exists
-az monitor log-analytics workspace show --resource-group YOUR_RG --workspace-name YOUR_WORKSPACE
-```
+3. **Check DCR logs endpoint:**
+   - Review `generated-config.json` for `dcr_logs_endpoint`
+   - Should be `https://<dcrname>-<suffix>-<region>.logs.z1.ingest.monitor.azure.us`
 
-**Common issues:**
-- ❌ Not logged into Azure → Run `az login`
-- ❌ Wrong subscription selected → Run `az account set --subscription "YOUR_SUBSCRIPTION_ID"`
-- ❌ Typo in config.json → Double-check all values
-- ❌ Missing permissions → You need Contributor role on the resource group
+### Deployment fails
 
-### No Data Appearing?
+- **Azure permissions:** Ensure you have Contributor or Owner role on the resource group
+- **Sentinel workspace:** Verify workspace exists and is accessible
+- **Azure Government:** If using GCC-High, ensure `location` is a Gov region (e.g., `usgovvirginia`)
 
-**First deployment takes 30-45 minutes!** This is normal. Here's why:
-1. Connectors need 5-10 minutes to initialize and start polling
-2. CrowdStrike API responds with data
-3. Data flows through DCE → DCR → Log Analytics (another 20-30 minutes)
-4. Log Analytics indexes the data (5-10 minutes)
+### API rate limiting
 
-**After waiting 45+ minutes, still no data?**
-
-Check connector status:
-```powershell
-az rest --method GET --url "https://management.azure.com/subscriptions/YOUR_SUBSCRIPTION_ID/resourceGroups/YOUR_RG/providers/Microsoft.OperationalInsights/workspaces/YOUR_WORKSPACE/providers/Microsoft.SecurityInsights/dataConnectors?api-version=2024-09-01" --query "value[].{Name:name, Active:properties.isActive}"
-```
-
-All connectors should show `"Active": true`.
-
-**Other things to check:**
-- ✓ CrowdStrike API credentials are correct
-- ✓ CrowdStrike API client has required permissions (READ access to all APIs)
-- ✓ CrowdStrike `api_base` URL is correct for your cloud (Commercial vs GovCloud)
-- ✓ Network connectivity between Azure and CrowdStrike API
-
-### Want to Redeploy?
-
-```powershell
-# 1. Clean up everything
-.\cleanup.ps1
-
-# 2. Wait for confirmation that all resources are deleted
-
-# 3. Deploy fresh
-.\deploy.ps1
-```
-
-### DCE/DCR Name Conflicts?
-
-If you get an error about DCE or DCR already existing:
-
-**Option 1: Use custom names** (recommended)
-```json
-{
-  "dce_name": "my-unique-dce-name-v2",
-  "dcr_name": "my-unique-dcr-name-v2"
-}
-```
-
-**Option 2: Let the script auto-generate unique names**
-```json
-{
-  "dce_name": "",
-  "dcr_name": ""
-}
-```
-Leave them as empty strings and the script will generate unique names like `dcr-crowdstrike-v2-endpoint-abcd`.
+- Connectors use `rateLimitQPS: 10` (10 queries per second)
+- If you hit CrowdStrike rate limits, reduce this value in `CrowdStrikeAPI_PollingConfig.json`
 
 ---
 
-## GCC-High / Azure Government Cloud
+## Files in This Package
 
-If you're deploying to **Azure Government** (GCC-High):
+| File | Purpose |
+|------|---------|
+| **config.json** | Customer configuration (fill this in first!) |
+| **deploy.ps1** | Master deployment script (runs all steps) |
+| **deploy-infrastructure.ps1** | Creates DCR with Direct kind |
+| **deploy-definition.ps1** | Deploys connector definition |
+| **deploy-all.ps1** | Deploys all 5 data connectors |
+| **cleanup.ps1** | Removes all deployed resources |
+| **CrowdStrikeAPI_DCR.json** | DCR template |
+| **CrowdStrikeAPI_Definition.json** | Connector definition template |
+| **CrowdStrikeAPI_PollingConfig.json** | Polling configuration for all 5 connectors |
+| **deploy-*.json** | Individual connector templates (5 files) |
 
-**Update these values in config.json:**
-```json
-{
-  "location": "usgovvirginia",
-  "crowdstrike_api_base": "https://api.laggar.gcw.crowdstrike.com"
-}
+---
+
+## Support
+
+For issues or questions:
+1. Check `generated-config.json` for deployed resource IDs
+2. Review Azure Portal → Sentinel → Data Connectors for connector status
+3. Check connector logs in Azure Monitor
+
+---
+
+## What's Different: No DCE Architecture
+
+**Traditional approach:**
+```
+Connectors → Data Collection Endpoint (DCE) → Data Collection Rule (DCR) → Log Analytics
 ```
 
-Everything else works the same!
+**This deployment (simplified):**
+```
+Connectors → Data Collection Rule (DCR with Direct kind) → Log Analytics
+```
 
----
+**Benefits:**
+- ✅ One less Azure resource to manage
+- ✅ Simpler deployment (fewer steps)
+- ✅ Easier troubleshooting (fewer components)
+- ✅ Same functionality and performance
+- ✅ Slightly lower Azure costs
 
-## API Endpoint Reference
-
-### CrowdStrike API Base URLs
-
-| Environment | API Base URL |
-|-------------|--------------|
-| **US Commercial** | `https://api.crowdstrike.com` |
-| **US Gov (GCC-High)** | `https://api.laggar.gcw.crowdstrike.com` |
-| **EU** | `https://api.eu-1.crowdstrike.com` |
-| **US-2** | `https://api.us-2.crowdstrike.com` |
-
-### API Endpoints (Pre-configured in config.json)
-
-These paths are appended to your `crowdstrike_api_base`:
-
-| Connector | Path | Method |
-|-----------|------|--------|
-| Vulnerabilities | `/spotlight/combined/vulnerabilities/v1` | GET |
-| Alerts | `/alerts/combined/alerts/v1` | POST |
-| Incidents | `/incidents/queries/incidents/v1` | GET |
-| Detections | `/detections/queries/detections/v1` | POST |
-| Hosts | `/devices/queries/devices-scroll/v1` | GET |
-
-> **Note:** The connector definitions automatically combine `crowdstrike_api_base` + `api_*_path` to build complete URLs.
-
----
-
-## Need Help?
-
-**Deployment questions?**
-- Check the [Troubleshooting](#troubleshooting) section above
-- Review the [File Reference](#file-reference) to understand what each script does
-- Verify all values in `config.json` are correct
-
-**CrowdStrike API issues?**
-- Verify your API credentials in the CrowdStrike console
-- Confirm your API client has READ permissions for all required APIs
-- Check the [CrowdStrike API Documentation](https://falcon.crowdstrike.com/documentation/)
-
-**Azure permissions issues?**
-- You need **Contributor** role on the resource group
-- You need **Microsoft Sentinel Contributor** role on the Sentinel workspace
-
----
-
-## That's It!
-
-**Two simple steps:**
-1. ✏️ Fill in `config.json` with your Azure and CrowdStrike information
-2. ▶️ Run `.\deploy.ps1`
-
-Your CrowdStrike data will start flowing into Sentinel within 30-45 minutes!
-
-**Questions?** Check the [File Reference](#file-reference) and [Troubleshooting](#troubleshooting) sections above.
+The DCR's built-in `logsIngestion` endpoint (generated when using `kind: "Direct"`) handles data ingestion directly, eliminating the need for a separate DCE resource.
