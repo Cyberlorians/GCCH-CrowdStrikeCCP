@@ -1,7 +1,5 @@
-# Prerequisites Check Script
-# Run this BEFORE deploying to ensure your environment is ready
-
-$ErrorActionPreference = "Stop"
+﻿#Requires -Version 5.1
+$ErrorActionPreference = 'Stop'
 
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "CrowdStrike Connector - Prerequisites Check" -ForegroundColor Cyan
@@ -9,11 +7,11 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 $allGood = $true
+$configPath = Join-Path -Path $PSScriptRoot -ChildPath 'config.json'
 
-# Check 1: Azure CLI installed
 Write-Host "[1/5] Checking Azure CLI..." -ForegroundColor Cyan
 try {
-    $azVersion = az version --query '\"azure-cli\"' -o tsv 2>$null
+    $azVersion = az version --query "azure-cli" -o tsv 2>$null
     if ($azVersion) {
         Write-Host "  ✓ Azure CLI installed: $azVersion" -ForegroundColor Green
     } else {
@@ -25,7 +23,6 @@ try {
     $allGood = $false
 }
 
-# Check 2: Logged into Azure
 Write-Host "`n[2/5] Checking Azure authentication..." -ForegroundColor Cyan
 try {
     $account = az account show 2>$null | ConvertFrom-Json
@@ -41,7 +38,6 @@ try {
     $allGood = $false
 }
 
-# Check 3: PowerShell version
 Write-Host "`n[3/5] Checking PowerShell version..." -ForegroundColor Cyan
 $psVersion = $PSVersionTable.PSVersion
 if ($psVersion.Major -ge 5) {
@@ -51,13 +47,11 @@ if ($psVersion.Major -ge 5) {
     $allGood = $false
 }
 
-# Check 4: config.json exists
 Write-Host "`n[4/5] Checking config.json..." -ForegroundColor Cyan
-if (Test-Path "config.json") {
+if (Test-Path $configPath) {
     try {
-        $config = Get-Content "config.json" | ConvertFrom-Json
-        $requiredFields = @("subscription_id", "resource_group", "workspace_name", "location", 
-                           "crowdstrike_api_base", "crowdstrike_client_id", "crowdstrike_client_secret")
+        $config = Get-Content $configPath -Raw | ConvertFrom-Json
+        $requiredFields = @("subscription_id", "resource_group", "workspace_name", "location", "crowdstrike_api_base", "crowdstrike_client_id", "crowdstrike_client_secret")
         $missing = @()
         foreach ($field in $requiredFields) {
             if (-not $config.$field) {
@@ -84,11 +78,10 @@ if (Test-Path "config.json") {
     $allGood = $false
 }
 
-# Check 5: Correct subscription and permissions
 Write-Host "`n[5/5] Checking subscription access..." -ForegroundColor Cyan
-if (Test-Path "config.json") {
+if (Test-Path $configPath) {
     try {
-        $config = Get-Content "config.json" | ConvertFrom-Json
+        $config = Get-Content $configPath -Raw | ConvertFrom-Json
         $currentAccount = az account show 2>$null | ConvertFrom-Json
         
         if ($currentAccount.id -eq $config.subscription_id) {
@@ -100,7 +93,6 @@ if (Test-Path "config.json") {
             Write-Host "    Run: az account set --subscription $($config.subscription_id)" -ForegroundColor Yellow
         }
         
-        # Check if resource group exists
         $rgExists = az group show --name $config.resource_group --subscription $config.subscription_id 2>$null
         if ($rgExists) {
             Write-Host "  ✓ Resource group '$($config.resource_group)' found" -ForegroundColor Green
@@ -115,7 +107,6 @@ if (Test-Path "config.json") {
     }
 }
 
-# Summary
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 if ($allGood) {
